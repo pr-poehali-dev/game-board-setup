@@ -29,6 +29,8 @@ export default function GameBoard() {
   const [cells, setCells] = useState<Record<string, string>>({});
   const [backgroundColor, setBackgroundColor] = useState('#1A1F2C');
   const [selectedTokenColor, setSelectedTokenColor] = useState('#9b87f5');
+  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
 
   const handleCellClick = (row: number, col: number) => {
     const key = `${row}-${col}`;
@@ -43,8 +45,20 @@ export default function GameBoard() {
     });
   };
 
+  const handleCellRightClick = (e: React.MouseEvent, row: number, col: number) => {
+    e.preventDefault();
+    setSelectedCell({ row, col });
+  };
+
   const clearBoard = () => {
     setCells({});
+    setSelectedCell(null);
+  };
+
+  const calculateDistance = (row1: number, col1: number, row2: number, col2: number) => {
+    const rowDiff = Math.abs(row2 - row1);
+    const colDiff = Math.abs(col2 - col1);
+    return Math.sqrt(rowDiff * rowDiff + colDiff * colDiff);
   };
 
   const getCellStyle = (row: number, col: number) => {
@@ -59,9 +73,16 @@ export default function GameBoard() {
     >
       <div className="w-full max-w-7xl">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold" style={{ color: backgroundColor === '#F1F0FB' ? '#1A1F2C' : '#FFFFFF' }}>
-            Игровое поле
-          </h1>
+          <div>
+            <h1 className="text-3xl font-bold" style={{ color: backgroundColor === '#F1F0FB' ? '#1A1F2C' : '#FFFFFF' }}>
+              Игровое поле
+            </h1>
+            {selectedCell && hoveredCell && (
+              <p className="text-sm mt-2" style={{ color: backgroundColor === '#F1F0FB' ? '#1A1F2C' : 'rgba(255, 255, 255, 0.8)' }}>
+                Расстояние: {calculateDistance(selectedCell.row, selectedCell.col, hoveredCell.row, hoveredCell.col).toFixed(2)} клеток
+              </p>
+            )}
+          </div>
           <Sheet>
             <SheetTrigger asChild>
               <Button 
@@ -140,27 +161,39 @@ export default function GameBoard() {
             }}
           >
             {Array.from({ length: ROWS }, (_, row) =>
-              Array.from({ length: COLS }, (_, col) => (
-                <button
-                  key={`${row}-${col}`}
-                  onClick={() => handleCellClick(row, col)}
-                  className="w-6 h-6 border transition-all duration-200 hover:scale-110 rounded-sm"
-                  style={{
-                    ...getCellStyle(row, col),
-                    borderColor: backgroundColor === '#F1F0FB' ? 'rgba(26, 31, 44, 0.3)' : 'rgba(255, 255, 255, 0.3)',
-                    backgroundColor: cells[`${row}-${col}`] ? cells[`${row}-${col}`] : 'rgba(255, 255, 255, 0.1)',
-                  }}
-                />
-              ))
+              Array.from({ length: COLS }, (_, col) => {
+                const isSelected = selectedCell?.row === row && selectedCell?.col === col;
+                return (
+                  <button
+                    key={`${row}-${col}`}
+                    onClick={() => handleCellClick(row, col)}
+                    onContextMenu={(e) => handleCellRightClick(e, row, col)}
+                    onMouseEnter={() => selectedCell && setHoveredCell({ row, col })}
+                    onMouseLeave={() => setHoveredCell(null)}
+                    className="w-6 h-6 border transition-all duration-200 hover:scale-110 rounded-sm relative"
+                    style={{
+                      ...getCellStyle(row, col),
+                      borderColor: backgroundColor === '#F1F0FB' ? 'rgba(26, 31, 44, 0.3)' : 'rgba(255, 255, 255, 0.3)',
+                      backgroundColor: cells[`${row}-${col}`] ? cells[`${row}-${col}`] : 'rgba(255, 255, 255, 0.1)',
+                      boxShadow: isSelected ? '0 0 0 2px #9b87f5' : 'none',
+                    }}
+                  />
+                );
+              })
             )}
           </div>
         </div>
 
         <div 
-          className="mt-6 text-center text-sm"
+          className="mt-6 text-center text-sm space-y-1"
           style={{ color: backgroundColor === '#F1F0FB' ? '#1A1F2C' : 'rgba(255, 255, 255, 0.7)' }}
         >
-          Нажмите на клетку, чтобы разместить жетон. Нажмите снова, чтобы убрать.
+          <p>Левый клик — разместить жетон. Правый клик — выбрать клетку для измерения расстояния.</p>
+          {selectedCell && (
+            <p className="font-medium" style={{ color: backgroundColor === '#F1F0FB' ? '#9b87f5' : '#D6BCFA' }}>
+              Выбрана клетка: строка {selectedCell.row + 1}, столбец {selectedCell.col + 1}
+            </p>
+          )}
         </div>
       </div>
     </div>
