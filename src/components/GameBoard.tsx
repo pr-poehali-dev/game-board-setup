@@ -28,6 +28,7 @@ const TOKEN_COLORS = [
 export default function GameBoard() {
   const [cells, setCells] = useState<Record<string, string>>({});
   const [backgroundColor, setBackgroundColor] = useState('#1A1F2C');
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [selectedTokenColor, setSelectedTokenColor] = useState('#9b87f5');
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
@@ -55,6 +56,21 @@ export default function GameBoard() {
     setSelectedCell(null);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setBackgroundImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeBackgroundImage = () => {
+    setBackgroundImage(null);
+  };
+
   const calculateDistance = (row1: number, col1: number, row2: number, col2: number) => {
     const rowDiff = Math.abs(row2 - row1);
     const colDiff = Math.abs(col2 - col1);
@@ -69,7 +85,13 @@ export default function GameBoard() {
   return (
     <div
       className="min-h-screen transition-colors duration-500 flex flex-col items-center justify-center p-4"
-      style={{ backgroundColor }}
+      style={{
+        backgroundColor: backgroundImage ? 'transparent' : backgroundColor,
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
     >
       <div className="w-full max-w-7xl">
         <div className="flex items-center justify-between mb-6">
@@ -104,20 +126,54 @@ export default function GameBoard() {
               </SheetHeader>
               <div className="mt-6 space-y-6">
                 <div>
-                  <Label className="text-base mb-3 block">Цвет фона</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {BACKGROUND_OPTIONS.map((option) => (
-                      <button
-                        key={option.color}
-                        onClick={() => setBackgroundColor(option.color)}
-                        className={`p-4 rounded-lg border-2 transition-all hover:scale-105 ${
-                          backgroundColor === option.color ? 'border-primary ring-2 ring-primary' : 'border-border'
-                        }`}
-                        style={{ backgroundColor: option.color }}
-                      >
-                        <span className="text-white font-medium drop-shadow-lg">{option.name}</span>
-                      </button>
-                    ))}
+                  <Label className="text-base mb-3 block">Фон</Label>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      {BACKGROUND_OPTIONS.map((option) => (
+                        <button
+                          key={option.color}
+                          onClick={() => {
+                            setBackgroundColor(option.color);
+                            setBackgroundImage(null);
+                          }}
+                          className={`p-4 rounded-lg border-2 transition-all hover:scale-105 ${
+                            backgroundColor === option.color && !backgroundImage ? 'border-primary ring-2 ring-primary' : 'border-border'
+                          }`}
+                          style={{ backgroundColor: option.color }}
+                        >
+                          <span className="text-white font-medium drop-shadow-lg">{option.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="pt-2 border-t">
+                      <Label htmlFor="image-upload" className="text-sm mb-2 block">Загрузить картинку</Label>
+                      <div className="flex gap-2">
+                        <label htmlFor="image-upload" className="flex-1">
+                          <div className="cursor-pointer border-2 border-dashed border-border hover:border-primary rounded-lg p-4 text-center transition-colors">
+                            <Icon name="Upload" size={20} className="mx-auto mb-1" />
+                            <span className="text-sm text-muted-foreground">Выбрать файл</span>
+                          </div>
+                          <input
+                            id="image-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                      {backgroundImage && (
+                        <Button
+                          onClick={removeBackgroundImage}
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-2"
+                        >
+                          <Icon name="X" size={16} className="mr-2" />
+                          Убрать картинку
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
