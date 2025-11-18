@@ -95,15 +95,17 @@ export default function GameBoard() {
     >
       <div className="w-full max-w-7xl">
         <div className="flex items-center justify-between mb-6">
-          <div>
+          <div className="min-h-[60px]">
             <h1 className="text-3xl font-bold" style={{ color: backgroundColor === '#F1F0FB' ? '#1A1F2C' : '#FFFFFF' }}>
               Игровое поле
             </h1>
-            {selectedCell && hoveredCell && (
-              <p className="text-sm mt-2" style={{ color: backgroundColor === '#F1F0FB' ? '#1A1F2C' : 'rgba(255, 255, 255, 0.8)' }}>
-                Расстояние: {calculateDistance(selectedCell.row, selectedCell.col, hoveredCell.row, hoveredCell.col).toFixed(2)} клеток
-              </p>
-            )}
+            <div className="h-6 mt-2">
+              {selectedCell && hoveredCell && (
+                <p className="text-sm" style={{ color: backgroundColor === '#F1F0FB' ? '#1A1F2C' : 'rgba(255, 255, 255, 0.8)' }}>
+                  Расстояние: {calculateDistance(selectedCell.row, selectedCell.col, hoveredCell.row, hoveredCell.col).toFixed(2)} клеток
+                </p>
+              )}
+            </div>
           </div>
           <Sheet>
             <SheetTrigger asChild>
