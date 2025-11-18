@@ -32,18 +32,46 @@ export default function GameBoard() {
   const [selectedTokenColor, setSelectedTokenColor] = useState('#9b87f5');
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
+  const [fillStartCell, setFillStartCell] = useState<{ row: number; col: number } | null>(null);
 
-  const handleCellClick = (row: number, col: number) => {
+  const handleCellClick = (row: number, col: number, isShiftPressed: boolean) => {
     const key = `${row}-${col}`;
-    setCells((prev) => {
-      const newCells = { ...prev };
-      if (newCells[key]) {
-        delete newCells[key];
-      } else {
-        newCells[key] = selectedTokenColor;
-      }
-      return newCells;
-    });
+    
+    if (isShiftPressed && fillStartCell) {
+      const minRow = Math.min(fillStartCell.row, row);
+      const maxRow = Math.max(fillStartCell.row, row);
+      const minCol = Math.min(fillStartCell.col, col);
+      const maxCol = Math.max(fillStartCell.col, col);
+      
+      setCells((prev) => {
+        const newCells = { ...prev };
+        for (let r = minRow; r <= maxRow; r++) {
+          for (let c = minCol; c <= maxCol; c++) {
+            newCells[`${r}-${c}`] = selectedTokenColor;
+          }
+        }
+        return newCells;
+      });
+      
+      setFillStartCell(null);
+    } else if (isShiftPressed) {
+      setFillStartCell({ row, col });
+      setCells((prev) => ({
+        ...prev,
+        [key]: selectedTokenColor,
+      }));
+    } else {
+      setFillStartCell(null);
+      setCells((prev) => {
+        const newCells = { ...prev };
+        if (newCells[key]) {
+          delete newCells[key];
+        } else {
+          newCells[key] = selectedTokenColor;
+        }
+        return newCells;
+      });
+    }
   };
 
   const handleCellRightClick = (e: React.MouseEvent, row: number, col: number) => {
@@ -54,6 +82,7 @@ export default function GameBoard() {
   const clearBoard = () => {
     setCells({});
     setSelectedCell(null);
+    setFillStartCell(null);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -227,10 +256,11 @@ export default function GameBoard() {
             {Array.from({ length: ROWS }, (_, row) =>
               Array.from({ length: COLS }, (_, col) => {
                 const isSelected = selectedCell?.row === row && selectedCell?.col === col;
+                const isFillStart = fillStartCell?.row === row && fillStartCell?.col === col;
                 return (
                   <button
                     key={`${row}-${col}`}
-                    onClick={() => handleCellClick(row, col)}
+                    onClick={(e) => handleCellClick(row, col, e.shiftKey)}
                     onContextMenu={(e) => handleCellRightClick(e, row, col)}
                     onMouseEnter={() => selectedCell && setHoveredCell({ row, col })}
                     onMouseLeave={() => setHoveredCell(null)}
@@ -239,7 +269,7 @@ export default function GameBoard() {
                       ...getCellStyle(row, col),
                       borderColor: backgroundColor === '#F1F0FB' ? 'rgba(26, 31, 44, 0.3)' : 'rgba(255, 255, 255, 0.3)',
                       backgroundColor: cells[`${row}-${col}`] ? cells[`${row}-${col}`] : 'rgba(255, 255, 255, 0.1)',
-                      boxShadow: isSelected ? '0 0 0 2px #9b87f5' : 'none',
+                      boxShadow: isSelected ? '0 0 0 2px #9b87f5' : isFillStart ? '0 0 0 2px #10B981' : 'none',
                     }}
                   />
                 );
@@ -252,8 +282,13 @@ export default function GameBoard() {
           className="mt-6 text-center text-sm space-y-1"
           style={{ color: backgroundColor === '#F1F0FB' ? '#1A1F2C' : 'rgba(255, 255, 255, 0.7)' }}
         >
-          <p>Левый клик — разместить жетон. Правый клик — выбрать клетку для измерения расстояния.</p>
-          {selectedCell && (
+          <p>Клик — разместить жетон. Shift + клик — заполнить область. Правый клик — измерение расстояния.</p>
+          {fillStartCell && (
+            <p className="font-medium" style={{ color: backgroundColor === '#F1F0FB' ? '#10B981' : '#10B981' }}>
+              Зажмите Shift и кликните на другую клетку для заливки области
+            </p>
+          )}
+          {selectedCell && !fillStartCell && (
             <p className="font-medium" style={{ color: backgroundColor === '#F1F0FB' ? '#9b87f5' : '#D6BCFA' }}>
               Выбрана клетка: строка {selectedCell.row + 1}, столбец {selectedCell.col + 1}
             </p>
