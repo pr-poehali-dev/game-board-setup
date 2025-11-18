@@ -178,21 +178,27 @@ export default function GameBoard() {
                 </div>
 
                 <div>
-                  <Label className="text-base mb-3 block">Цвет жетона</Label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <Label className="text-base mb-3 block">Активный цвет жетона</Label>
+                  <div className="grid grid-cols-3 gap-2">
                     {TOKEN_COLORS.map((token) => (
                       <button
                         key={token.color}
                         onClick={() => setSelectedTokenColor(token.color)}
-                        className={`p-4 rounded-lg border-2 transition-all hover:scale-105 ${
+                        className={`h-12 rounded-lg border-2 transition-all hover:scale-105 flex items-center justify-center ${
                           selectedTokenColor === token.color ? 'border-primary ring-2 ring-primary' : 'border-border'
                         }`}
                         style={{ backgroundColor: token.color }}
+                        title={token.name}
                       >
-                        <span className="text-white font-medium drop-shadow-lg">{token.name}</span>
+                        {selectedTokenColor === token.color && (
+                          <Icon name="Check" size={20} className="text-white drop-shadow-lg" />
+                        )}
                       </button>
                     ))}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Выбранный цвет: <span className="font-medium">{TOKEN_COLORS.find(t => t.color === selectedTokenColor)?.name}</span>
+                  </p>
                 </div>
 
                 <Button onClick={clearBoard} variant="destructive" className="w-full">
